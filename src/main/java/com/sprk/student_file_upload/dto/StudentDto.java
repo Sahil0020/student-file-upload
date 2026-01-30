@@ -1,5 +1,8 @@
 package com.sprk.student_file_upload.dto;
 
+import com.sprk.student_file_upload.entity.StatusReview;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,7 +29,7 @@ public class StudentDto {
 
     private String review;
 
-    private String status;
+    private StatusReview status;
 
     private String fileName;
 

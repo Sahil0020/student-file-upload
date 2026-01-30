@@ -3,21 +3,19 @@ package com.sprk.student_file_upload.service.impl;
 import com.sprk.student_file_upload.dto.ReviewDto;
 import com.sprk.student_file_upload.dto.StudentDto;
 import com.sprk.student_file_upload.dto.StudentFileDto;
+import com.sprk.student_file_upload.entity.StatusReview;
 import com.sprk.student_file_upload.entity.Student;
 import com.sprk.student_file_upload.mapper.StudentMapper;
 import com.sprk.student_file_upload.repository.StudentRespository;
 import com.sprk.student_file_upload.service.StudentService;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.hibernate.SpringImplicitNamingStrategy;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -28,7 +26,6 @@ import java.util.stream.Collectors;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -53,7 +50,7 @@ public class StudentServiceImpl implements StudentService {
         Student student = studentMapper.mapDtotoInfo(studentFileDto);
         student.setFileName(filename);
         student.setReview("Under Review");
-        student.setStatus("Uploading");
+        student.setStatus(StatusReview.SUBMITTED);
         student.setFilePath(uploadDirectory + "/" + filename);
 
         File dir = new File(uploadDirectory);
@@ -102,8 +99,7 @@ public class StudentServiceImpl implements StudentService {
         }
         Long rollno = Long.parseLong(rollnoStr);
         Student student = studentRespository.findById(rollno).orElseThrow(() -> new RuntimeException("Student Not found"));
-        student.setReview("Under Review");
-        student.setStatus("Uploading");
+
         Path path = Paths.get(uploadDirectory, student.getFileName());
         Resource resource = new UrlResource(path.toUri());
         if (!resource.exists()) {
@@ -121,21 +117,42 @@ public class StudentServiceImpl implements StudentService {
         Long rollno=Long.parseLong(rollnoStr);
         Student student= studentRespository.findById(rollno).orElseThrow(()-> new RuntimeException("Student Not found"));
         student.setReview(reviewDto.getReview());
-        student.setStatus(reviewDto.getStatus());
+        student.setStatus(StatusReview.REJECTED);
+        studentRespository.save(student);
+        return studentMapper.mapstudentInfotostudentDto(student);
+    }
+
+    @Override
+    public StudentDto uploadFile(String rollnoStr, MultipartFile file) throws IOException{
+        if (!Pattern.matches("^\\d+$", rollnoStr)) {
+            throw new RuntimeException("Student with id Not found");
+        }
+        Long rollno=Long.parseLong(rollnoStr);
+        Student student= studentRespository.findById(rollno).orElseThrow(()-> new RuntimeException("Student Not found"));
+        student.setFileName(file.getOriginalFilename());
+        student.setFilePath(uploadDirectory + "/" + file.getOriginalFilename());
+        File dir = new File(uploadDirectory);
+        File destination = new File(dir, file.getOriginalFilename());
+        file.transferTo(destination);
+        student.setStatus(StatusReview.RESUBMITTED);
+        student.setReview("Re-submitted assigenement");
+        studentRespository.save(student);
+        return studentMapper.mapstudentInfotostudentDto(student);
+    }
+
+    @Override
+    public StudentDto approvedStudent(String rollnoStr, ReviewDto reviewDto) {
+        if (!Pattern.matches("^\\d+$", rollnoStr)) {
+            throw new RuntimeException("Student with id Not found");
+        }
+        Long rollno=Long.parseLong(rollnoStr);
+        Student student= studentRespository.findById(rollno).orElseThrow(()-> new RuntimeException("Student Not found"));
+        student.setReview(reviewDto.getReview());
+        student.setStatus(StatusReview.APPROVED);
+        studentRespository.save(student);
         return studentMapper.mapstudentInfotostudentDto(student);
     }
 }
 
-//    @Override
-//    public StudentDto updateStudent(String rollnoStr, StudentFileDto studentFileDto) {
-//
-//        if (!Pattern.matches("^\\d+$", rollnoStr)) {
-//            throw new RuntimeException("Student with id Not found");
-//        }
-//        Long rollno=Long.parseLong(rollnoStr);
-//        Student student= studentRespository.findById(rollno).orElseThrow(()-> new RuntimeException("Student Not found"));
-//
-//        student.setFileName(studentFileDto.getFile().getOriginalFilename());
-//        return student;
-//}
+
 

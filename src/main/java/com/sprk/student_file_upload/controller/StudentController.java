@@ -7,14 +7,12 @@ import com.sprk.student_file_upload.service.StudentService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 @RestController
@@ -63,10 +61,21 @@ try {
 
     }
 
-    @PutMapping("/student/{rollNo}")
+    @PutMapping("/teacher/reject/{rollNo}")
     public ResponseEntity<StudentDto> updateStudent(@PathVariable("rollNo") String rollnoStr, @RequestBody ReviewDto reviewDto){
         StudentDto student=studentService.updateStudent(rollnoStr,reviewDto);
         return ResponseEntity.status(200).body(student);
-
     }
+    @PutMapping("/teacher/approved/{rollNo}")
+    public ResponseEntity<StudentDto> approvedStudent(@PathVariable("rollNo") String rollnoStr, @RequestBody ReviewDto reviewDto){
+        StudentDto student=studentService.approvedStudent(rollnoStr,reviewDto);
+        return ResponseEntity.status(200).body(student);
+    }
+
+    @PutMapping("/student/resubmit/{rollNo}")
+    public ResponseEntity<StudentDto> uploadFile(@PathVariable("rollNo") String rollnoStr, @RequestParam MultipartFile file)throws IOException{
+        StudentDto studentDto=studentService.uploadFile(rollnoStr,  file);
+        return ResponseEntity.status(200).body(studentDto);
+    }
+
 }

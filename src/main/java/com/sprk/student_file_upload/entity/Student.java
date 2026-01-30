@@ -32,5 +32,6 @@ public class Student {
 
     private String review;
 
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private StatusReview status;
 }
