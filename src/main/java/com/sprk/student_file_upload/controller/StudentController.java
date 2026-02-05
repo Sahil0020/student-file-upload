@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,6 +24,7 @@ public class StudentController {
     private final StudentService studentService;
 
     @PostMapping("/student")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentDto> addStudent(@Valid @ModelAttribute StudentFileDto studentFileDto){
 try {
 
@@ -35,12 +37,14 @@ try {
     }
 
     @GetMapping("/student")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<StudentDto>> getallStudent(){
         List<StudentDto> exitsStudents=studentService.getallStudent();
         return ResponseEntity.status(200).body(exitsStudents);
     }
 
     @GetMapping("/student/{rollNo}")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<StudentDto> getById(@PathVariable("rollNo") String rollNostr){
         StudentDto studentDto=studentService.getById(rollNostr);
 
@@ -48,6 +52,7 @@ try {
     }
 
     @DeleteMapping("/student/{rollNo}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deleteStudent(@PathVariable("rollNo") String rollNostr)
     {
         String studentDto=studentService.deletedStudent(rollNostr);
@@ -55,24 +60,28 @@ try {
         return ResponseEntity.status(200).body(studentDto);
     }
     @GetMapping("/student/download/{rollNo}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Resource>  downloadInfo(@PathVariable("rollNo") String rollnoStr)throws IOException{
         Resource resource=studentService.downloadFile(rollnoStr);
-        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=\""+resource.getFilename()+"\"").body(resource);
+            return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=\""+resource.getFilename()+"\"").body(resource);
 
     }
 
     @PutMapping("/teacher/reject/{rollNo}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<StudentDto> updateStudent(@PathVariable("rollNo") String rollnoStr, @RequestBody ReviewDto reviewDto){
         StudentDto student=studentService.updateStudent(rollnoStr,reviewDto);
         return ResponseEntity.status(200).body(student);
     }
     @PutMapping("/teacher/approved/{rollNo}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<StudentDto> approvedStudent(@PathVariable("rollNo") String rollnoStr, @RequestBody ReviewDto reviewDto){
         StudentDto student=studentService.approvedStudent(rollnoStr,reviewDto);
         return ResponseEntity.status(200).body(student);
     }
 
     @PutMapping("/student/resubmit/{rollNo}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentDto> uploadFile(@PathVariable("rollNo") String rollnoStr, @RequestParam MultipartFile file)throws IOException{
         StudentDto studentDto=studentService.uploadFile(rollnoStr,  file);
         return ResponseEntity.status(200).body(studentDto);
